@@ -101,47 +101,80 @@ double service_time(double rate) //negative exponential distributed, rate = mu
 int main()
 {
     //initilaze variables
-    unsigned    length  = 0;
-    double      time    = 0.0;
-    double      lambda  = 0.1; //inter-arrival rate
+    unsigned    length  = 0;   //hold the current length of the queue
+    double      time    = 0.0; //current time during the simulation
+    double      lambda  = 1; //inter-arrival rate
     double      mu      = 1;   //transmission rate
-    GlobalEventList GEL;
-    queue<Packet> Buffer;
-    Event firstEvent(time+inter_arrival(lambda),EventType::Arrival); //generate the first arrival event
+    GlobalEventList GEL;       //Holds all of the events for the simulation
+
+    double total_time = 0.0;
+
+
+    //this needs to be wrapped in a class. Will make the code later on better
+    queue<Packet> Buffer;      //buffer for the server
+    
+    //generate the fist event and put it in the GEL
+    GEL.pushEvent(Event(time+inter_arrival(lambda),EventType::Arrival)); 
     
     for(int i = 0; i<100000;i++)
     {
-        //get event from the GEL
+        //get the next event from the GEL
         Event currentEvent = GEL.nextEvent();
 
         //if event is arrival process arrival event
         if(currentEvent.getEventType() == EventType::Arrival)
         {
-
             //take into account length also counts the packet that is currently 
             //being sent. I have not done this yes. 
             time=currentEvent.getTime();
+            //we now schedule the next arrival event since we only set up one 
+            //arrival event at a time. 
             GEL.pushEvent(Event(time+inter_arrival(lambda),EventType::Arrival));
+            //we are processing an arrival so we generate the packet that we will 
+            //be processing. we determin what the servoce time will be. 
             Packet newPacket;
-            newPacket.serviceTime = service_time(mu);
+            double serviceTime = service_time(mu);
+            newPacket.serviceTime = serviceTime;
             
+            //if the buffer is empty we immeditly start processing the packet
             if(Buffer.empty())
             {
+                total_time+=newPacket.serviceTime;
+                //generate a departure event and insert it into the GEL
                 GEL.pushEvent(Event(time+newPacket.serviceTime,EventType::Departure));
             }
+            //if the buffer is not empty we need to put the packet into the buffer
             else
             {
+                //inserts the packet into the buffer
                 Buffer.push(newPacket);
+                //increase the length by 1
                 length+=1;
             }
         }
+        //else process departure event
         else
         {
+            //set the current time for the simulation as the time the 
+            //departure occured. 
             time=currentEvent.getTime();
+            //decrease length by 1
             length-=1;
+            //if buffer is not empty we will start transmitting the next packet. 
+            if(!Buffer.empty())
+            {
+                //we pop the next packet from the queue
+                
+                //the following functions should be put into the buffer class
+                //so that that it makes this look better
+                Packet nextPacket = Buffer.front();
+                Buffer.pop();
+                total_time+=nextPacket.serviceTime;
+                //we generate the next departure and put it into the GEL
+                GEL.pushEvent(Event(time+nextPacket.serviceTime,EventType::Departure));
+            }
 
         }
-        //else process departure event
     }
-
+    cout<<total_time<<"\t"<<time<<"\t"<<total_time/time<<endl;
 }
