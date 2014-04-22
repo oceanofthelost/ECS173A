@@ -1,7 +1,7 @@
 CXX =gccfilter -c -p -w -a -n g++
 CXXFLAGS = -MD -MP -pedantic -Wall -std=c++11 -Wextra 
 CXXSRC = $(wildcard *.cpp)
-EXE = main
+EXE = phase1
 
 
 $(EXE):$(CXXSRC:%.cpp=%.o)

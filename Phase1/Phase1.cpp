@@ -7,11 +7,21 @@
 using namespace std;
 
 //negative exponential distributed, rate = lambda
-double inter_arrival(double rate) 
+double inter_arrival(const double& rate,const bool& pareto) 
 {
-    double u;
-    u = drand48();
-    return ((-1/rate)*log(1-u));
+    if(pareto)
+    {
+        //double u = drand48();
+        //return 1*pow(1-u,-1/rate);
+        double u = drand48();
+        return (rate*pow(u,-1/1));
+    }
+    else
+    {
+        double u;
+        u = drand48();
+        return ((-1/rate)*log(1-u));
+    }
 }
 
 //using argc and argv makes testing a lot easier to run 
@@ -24,22 +34,28 @@ int main(int argc, char* argv[])
     //arcv[1] = lambda
     //argv[2] = mu
     //argv[3] = buffersize
-    //
+    //argv[4] = 0: exponential, 1: pareto
     //if buffer size >= 0 then this is the buffer size limit
     //if buffer size < 0 then this means the buffer has infinite size
 
-    if(argc == 4)
+    if(argc == 5)
     {
         
         //initilaze variables
         double  time    = 0.0;
-        double  lambda  = atof(argv[1]);    
+        double  lambda  = atof(argv[1]);
+        bool    pareto  = true;
+        
+        if(atoi(argv[4]) == 0)
+        {
+            pareto = false;
+        }
         //mu, maxBuffer
         Server server(atof(argv[2]),atoi(argv[3]));
         GlobalEventList GEL;
-
+        
         //generate the fist event and put it in the GEL
-        GEL.addEvent(Event(time+inter_arrival(lambda),EventType::Arrival)); 
+        GEL.addEvent(Event(time+inter_arrival(lambda,pareto),EventType::Arrival)); 
 
         for(int i = 0; i<100000;i++)
         {
@@ -51,7 +67,7 @@ int main(int argc, char* argv[])
                 double oldTime = time;
                 time = event.getTime();
                 //schedule next arrival event and put it in the GEL
-                GEL.addEvent(Event(time + inter_arrival(lambda),EventType::Arrival));
+                GEL.addEvent(Event(time + inter_arrival(lambda,pareto),EventType::Arrival));
                 //process current event
                 Event returned = server.arrivalEvent(time,oldTime);
                 
@@ -75,11 +91,11 @@ int main(int argc, char* argv[])
                 }
             }
         }
-        cout<<"Server Statistics"<<endl;
-        server.printStatistics(time);
+        //cout<<"Server Statistics"<<endl;
+        server.printStatistics(time,lambda);
     }
     else
     {
-        cout<<"Usage is ./main lambda mu buffersize"<<endl;
+        cout<<"Usage is ./main lambda mu buffersize [0:exponential,1:pareto]"<<endl;
     }
 }
