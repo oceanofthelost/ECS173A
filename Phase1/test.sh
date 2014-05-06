@@ -6,16 +6,21 @@ test()
     
     for i in $lambda
     do
-        ./phase1 $i 1 $1 0
+        ./phase1 $i 1 $1 $2 File
     done
 }
 
 
 buffersize="-1 1 20 50"
 
-echo "lambda  Buffersize  Utilization  MeanBufferLength  DroppedPackets"
+echo "Lambda,Buffersize,Utilization,MeanBufferLength,DroppedPackets"
 
 for i in $buffersize
 do
-    test $i
+    test $i "Exponential"
+done
+
+for i in $buffersize
+do
+    test $i "Pareto"
 done

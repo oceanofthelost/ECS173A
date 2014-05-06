@@ -1,20 +1,33 @@
 #include <cstdlib>
 #include <iostream>
 #include <cmath>
+#include <string>
 #include "Event.h"
 #include "GlobalEventList.h"
 #include "Server.h"
 using namespace std;
 
-//negative exponential distributed, rate = lambda
+/**
+ * Determine the inter arrival time for a packet
+ * @param  rate: rate parameter for the random variable
+ * @param  Pareto: determines if we are going to use Pareto distribution 
+ *                 or exponential distribution
+ * @return: Value for the next inter arrival rate
+ */
 double inter_arrival(const double& rate,const bool& pareto) 
 {
     if(pareto)
     {
-        //double u = drand48();
-        //return 1*pow(1-u,-1/rate);
-        double u = drand48();
-        return (rate*pow(u,-1/1));
+
+        //uses the formula pareto = x_m/(U^(1/a));
+        //where U is randomly distibuted over [o,1] and 
+        //a = k/(k-x_m). K is the mean of pareto which is the 
+        //interarrival rate of the negative exponential distrabution. 
+        //x_m = 10% of k
+        double u  = drand48();
+        double xm = rate*.1;
+        double a  = rate/(rate-xm);
+        return xm/(pow(u,(double)1/a));
     }
     else
     {
@@ -24,32 +37,29 @@ double inter_arrival(const double& rate,const bool& pareto)
     }
 }
 
-//using argc and argv makes testing a lot easier to run 
-//multiple tests, that way we dont have to recompile affer
-//changing the parameters
+/**
+ * Runs the simulation
+ * @param  argc:    argv[0] = executable, this is default
+                    arcv[1] = lambda
+                    argv[2] = mu
+                    argv[3] = buffer-size
+                    argv[4] = 0: exponential, 1: Pareto
+ * @param  argv
+ * @return
+ */
 int main(int argc, char* argv[])
 {
-    //argc needs to be 4
-    //argv[0] = executable, this is default
-    //arcv[1] = lambda
-    //argv[2] = mu
-    //argv[3] = buffersize
-    //argv[4] = 0: exponential, 1: pareto
     //if buffer size >= 0 then this is the buffer size limit
     //if buffer size < 0 then this means the buffer has infinite size
 
-    if(argc == 5)
+    if(argc == 6 and ((string)argv[4]=="Pareto" or (string)argv[4]=="Exponential"))
     {
         
-        //initilaze variables
+        //initialize variables
         double  time    = 0.0;
         double  lambda  = atof(argv[1]);
-        bool    pareto  = true;
-        
-        if(atoi(argv[4]) == 0)
-        {
-            pareto = false;
-        }
+        bool    pareto  = (string)argv[4]=="Pareto"?true:false;
+        bool    file    = (string)argv[5]=="File"?true:false;
         //mu, maxBuffer
         Server server(atof(argv[2]),atoi(argv[3]));
         GlobalEventList GEL;
@@ -60,7 +70,7 @@ int main(int argc, char* argv[])
         for(int i = 0; i<100000;i++)
         {
             Event event = GEL.nextEvent();
-
+            
             //arrival event
             if(event.getEventType() == EventType::Arrival)
             {
@@ -91,11 +101,10 @@ int main(int argc, char* argv[])
                 }
             }
         }
-        //cout<<"Server Statistics"<<endl;
-        server.printStatistics(time,lambda);
+        server.printStatistics(time,lambda,file);
     }
     else
     {
-        cout<<"Usage is ./main lambda mu buffersize [0:exponential,1:pareto]"<<endl;
+        cout<<"Usage is ./main lambda mu buffer-size [Exponential,Pareto] File"<<endl;
     }
 }

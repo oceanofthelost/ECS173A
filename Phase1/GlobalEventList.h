@@ -7,11 +7,11 @@ using namespace std;
 class GlobalEventList
 {
     private:
-        //we require only inserting and removing elements form our sata 
-        //structure. We also require that the elemenet that is removed is 
+        //we require only inserting and removing elements form our data 
+        //structure. We also require that the element that is removed is 
         //the event with the smallest time. Because of this i chose 
-        //a priority queue of events keyed to time. By deffinition a priority
-        //queue implements our requirments
+        //a priority queue of events keyed to time. By definition a priority
+        //queue implements our requirements
         priority_queue<Event> GEL;
     public:
         //we make the GEL an empty priority queue

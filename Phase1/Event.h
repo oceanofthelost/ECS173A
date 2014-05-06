@@ -1,14 +1,14 @@
 #ifndef EVENT_SDA
 #define EVENT_SDA
 
-//used to distiguish between events types
+//used to distinguish between events types
 enum class EventType {Arrival,Departure,Nothing};
 
 class Event
 {
     private:
         //all events have a time and event type 
-        //assoiated with them
+        //associated with them
         double      time;
         EventType   event_type;
     public:
@@ -18,12 +18,12 @@ class Event
         //used to compare 2 events. This is implemented the way it 
         //is so that i can use a priority queue. 
         //I want event sorted by smallest time to largest so 
-        //that is why the operation insde operator< is a >
+        //that is why the operation inside operator< is a >
         bool operator<(const Event& E) const;
         //we want to find out why type of event the 
         //event is
         EventType getEventType() const;
-        //we get the time the event occures at
+        //we get the time the event occurs at
         double getTime() const;
 };
 #endif 

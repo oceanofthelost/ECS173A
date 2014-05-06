@@ -30,7 +30,7 @@ class Server
         //default constructor
         Server(double,int);
         //we display the statistics for the server
-        void printStatistics(const double&,const double&) const;
+        void printStatistics(const double&,const double&, const bool&) const;
         //process an arrival event
         Event arrivalEvent(const double&,const double&);
         //process a departure event;

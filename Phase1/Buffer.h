@@ -12,7 +12,7 @@ using namespace std;
 class Buffer
 {
     private:
-        //data structre that models the buffer
+        //data structure that models the buffer
         queue<Packet> Buff;
     public:
         //default constructor for the Buffer

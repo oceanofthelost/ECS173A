@@ -1,6 +1,5 @@
 #include <iostream>
 #include <cmath>
-#include <iomanip>      // std::setprecision
 #include "Server.h"
 #include "Event.h"
 using namespace std;
@@ -8,7 +7,11 @@ using namespace std;
 //function prototypes
 double service_time(const double&); 
 
-//Server member functions
+/**
+ * Default constructor for the server
+ * @parem m: mu rate 
+ * @parem maxBuffer: the maximum size of the buffer
+ */
 Server::Server(double m, int maxBuffer)
 {
     utilization_time    = 0.0;
@@ -20,49 +23,66 @@ Server::Server(double m, int maxBuffer)
     mu                  = m;
 }
 
-void Server::printStatistics(const double& total_time,const double& lambda) const
+/**
+ * Will display the server stats to the terminal window
+ * @param total_time: total time the server ran
+ * @param lambda: the lambda that is used for the simulation
+ * @param toFile: Determines how i am going to print the data
+ */
+void Server::printStatistics(const double& total_time,const double& lambda, const bool& toFile) const
 {
-    /*
-    if(maxBufferSize < 0)
+    if(!toFile)
     {
-        cout<<"Buffersize:\t\t"<<"Infinite"<<endl;
+        if(maxBufferSize < 0)
+        {
+            cout<<"Buffersize:\t\t"<<"Infinite"<<endl;
+        }
+        else
+        {
+            cout<<"Buffersize:\t\t\t"<<maxBufferSize<<endl;
+        }
+        cout<<"Lambda:\t\t\t\t"<<lambda<<endl;
+        cout<<"Mu:\t\t\t\t"<<mu<<endl;
+        cout<<"Utilization time:\t\t"<<utilization_time/total_time<<endl;
+        cout<<"Mathmatical Utilization:\t"<<lambda/mu<<endl;
+        cout<<"Mean Buffer Length:\t\t"<<mean_buffer_length/total_time<<endl;
+        cout<<"Mathmatical Buffer length:\t"<<(lambda/mu)/(1-(lambda/mu))<<endl;
+        cout<<"Dropped Packets:\t\t"<<dropped_packets<<endl;
+        cout<<"% Dropped Packets:\t\t"<<(dropped_packets/100000)*100<<endl;
+        cout<<endl;
     }
     else
     {
-        cout<<"Buffersize:\t\t\t"<<maxBufferSize<<endl;
-    }
-    cout<<"Lambda:\t\t\t\t"<<lambda<<endl;
-    cout<<"Mu:\t\t\t\t"<<mu<<endl;
-    cout<<"Utilization time:\t\t"<<utilization_time/total_time<<endl;
-    cout<<"Mathmatical Utilization:\t"<<lambda/mu<<endl;
-    cout<<"Mean Buffer Length:\t\t"<<mean_buffer_length/total_time<<endl;
-    cout<<"Mathmatical Buffer length:\t"<<(lambda/mu)/(1-(lambda/mu))<<endl;
-    cout<<"Dropped Packets:\t\t"<<dropped_packets<<endl;
-    cout<<"% Dropped Packets:\t\t"<<(dropped_packets/100000)*100<<endl;
-    cout<<endl;
-    */
+        //prints data to a comma deliminated file. used so that data can be parsed and be 
+        //put into a table easly
+        cout<<lambda<<",";
+        if(maxBufferSize < 0)
+        {
+            cout<<"Infinite,";
+            cout<<utilization_time/total_time<<",";
+            cout<<mean_buffer_length/total_time<<",";
+            cout<<dropped_packets<<",";
+            cout<<endl;
 
-    cout<<fixed<<setprecision(4)<<lambda<<"\t";
-    if(maxBufferSize < 0)
-    {
-        cout<<"Infinite \t";
-        cout<<utilization_time/total_time<<"\t\t";
-        cout<<mean_buffer_length/total_time<<"\t\t";
-        cout<<setprecision(0)<<dropped_packets<<"\t";
-        cout<<endl;
+        }
+        else
+        {
+            cout<<maxBufferSize<<",";
+            cout<<utilization_time/total_time<<",";
+            cout<<mean_buffer_length/total_time<<",";
+            cout<<dropped_packets<<",";
+            cout<<endl;
 
+        }
     }
-    else
-    {
-        cout<<maxBufferSize<<"\t\t";
-        cout<<utilization_time/total_time<<"\t\t";
-        cout<<mean_buffer_length/total_time<<"\t\t";
-        cout<<setprecision(0)<<dropped_packets<<"\t";
-        cout<<endl;
+}
 
-    }
-    }
-
+/**
+ * Server has an an arrival event occurring
+ * @param  currentTime: current time that the event id occurring. 
+ * @param  oldTime: time the last event occurred
+ * @return: Event that will determine the next step of the simulation.
+ */
 Event Server::arrivalEvent(const double& currentTime,const double& oldTime)
 {
     //generate the packet that arrived
@@ -82,7 +102,7 @@ Event Server::arrivalEvent(const double& currentTime,const double& oldTime)
         //if maxbuffsize < 0 buffer is infinite in size
         //otherwise buffer is finite and we make sure its not full
         //buf.size() = length-1 since length = buff.size() + 1 if transmitting
-        if((maxBufferSize < 0) || (buff.size() < maxBufferSize))
+        if((maxBufferSize < 0) or (buff.size() < maxBufferSize))
         {
             buff.addPacket(packet);
             length+=1;
@@ -101,6 +121,12 @@ Event Server::arrivalEvent(const double& currentTime,const double& oldTime)
     return Event(0,EventType::Nothing);
 }
 
+/**
+ * Departure event for the server
+ * @param  currentTime: current time the event is occurring 
+ * @param  oldTime: time last event occurred
+ * @return : Event that determines the next step in the simulation 
+ */
 Event Server::departureEvent(const double& currentTime, const double& oldTime)
 {
     //packet is done transmitting
