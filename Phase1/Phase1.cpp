@@ -25,8 +25,9 @@ double inter_arrival(const double& rate,const bool& pareto)
         //interarrival rate of the negative exponential distrabution. 
         //x_m = 10% of k
         double u  = drand48();
-        double xm = rate*.1;
-        double a  = rate/(rate-xm);
+        double k = 1/rate;
+        double xm = k*.1;
+        double a  = k/(k-xm);
         return xm/(pow(u,(double)1/a));
     }
     else
@@ -54,6 +55,7 @@ int main(int argc, char* argv[])
 
     if(argc == 6 and ((string)argv[4]=="Pareto" or (string)argv[4]=="Exponential"))
     {
+        srand48(time(NULL));
         
         //initialize variables
         double  time    = 0.0;

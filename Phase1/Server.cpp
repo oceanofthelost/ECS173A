@@ -4,6 +4,8 @@
 #include "Event.h"
 using namespace std;
 
+static unsigned received_packets = 0;
+
 //function prototypes
 double service_time(const double&); 
 
@@ -33,28 +35,61 @@ void Server::printStatistics(const double& total_time,const double& lambda, cons
 {
     if(!toFile)
     {
+        //infinite buffer size
         if(maxBufferSize < 0)
         {
+            double rho = lambda/mu; 
             cout<<"Buffersize:\t\t"<<"Infinite"<<endl;
+            cout<<"Lambda:\t\t\t\t"<<lambda<<endl;
+            cout<<"Mu:\t\t\t\t"<<mu<<endl;
+            cout<<"Utilization time:\t\t"<<utilization_time/total_time<<endl;
+            cout<<"Mathematical Utilization:\t"<<rho<<endl;
+            cout<<"Mean Buffer Length:\t\t"<<mean_buffer_length/total_time<<endl;
+            cout<<"Mathematical Buffer length:\t"<<rho/((double)1-rho)<<endl;
+            cout<<"Dropped Packets:\t\t"<<dropped_packets<<endl;
+            cout<<"% Dropped Packets:\t\t"<<(dropped_packets/received_packets)*(double)100<<endl;
+            cout<<endl;
+
         }
+        //finite buffer size
         else
         {
             cout<<"Buffersize:\t\t\t"<<maxBufferSize<<endl;
+            cout<<"Lambda:\t\t\t\t"<<lambda<<endl;
+            cout<<"Mu:\t\t\t\t"<<mu<<endl;
+            cout<<"Utilization time:\t\t"<<utilization_time/total_time<<endl;
+            cout<<"Mathematical Utilization:\t"<<lambda/mu<<endl;
+            cout<<"Mean Buffer Length:\t\t"<<mean_buffer_length/total_time<<endl;
+            
+            double rho = lambda/mu;
+            double left = rho/((double)1-rho);
+
+            double right_top = ((double)maxBufferSize+(double)1)*pow(rho,(double)(maxBufferSize+1));
+            double right_bottom = (double)1-pow(rho,(double)(maxBufferSize+1));
+            double right = right_top/right_bottom;
+            double result = left-right;
+            
+            /*
+            double rho = lambda/mu;
+            double left = rho/((double)1-rho);
+            double top = 1+(maxBufferSize*pow(rho,maxBufferSize+1));
+            double bottom = (double)1-pow(rho,maxBufferSize+1);
+            double right = top/bottom;
+            double result = left - rho*right;
+            */
+            
+            cout<<"Mathematical Buffer length:\t"<<result<<endl;
+            cout<<"Dropped Packets:\t\t"<<dropped_packets<<endl;
+            cout<<"Received Packets:\t\t"<<received_packets<<endl;
+            cout<<"% Dropped Packets:\t\t"<<(dropped_packets/received_packets)*(double)100<<endl;
+            cout<<endl;
         }
-        cout<<"Lambda:\t\t\t\t"<<lambda<<endl;
-        cout<<"Mu:\t\t\t\t"<<mu<<endl;
-        cout<<"Utilization time:\t\t"<<utilization_time/total_time<<endl;
-        cout<<"Mathmatical Utilization:\t"<<lambda/mu<<endl;
-        cout<<"Mean Buffer Length:\t\t"<<mean_buffer_length/total_time<<endl;
-        cout<<"Mathmatical Buffer length:\t"<<(lambda/mu)/(1-(lambda/mu))<<endl;
-        cout<<"Dropped Packets:\t\t"<<dropped_packets<<endl;
-        cout<<"% Dropped Packets:\t\t"<<(dropped_packets/100000)*100<<endl;
-        cout<<endl;
+        
     }
     else
     {
         //prints data to a comma deliminated file. used so that data can be parsed and be 
-        //put into a table easly
+        //put into a table easily
         cout<<lambda<<",";
         if(maxBufferSize < 0)
         {
@@ -89,16 +124,22 @@ Event Server::arrivalEvent(const double& currentTime,const double& oldTime)
     Packet packet;
     packet.serviceTime = service_time(mu);
     
+    mean_buffer_length+=((double)length * (currentTime-oldTime));
+//cout<<mean_buffer_length<<endl;
+    received_packets++;
+
+    
+    //cout<<mean_buffer_length<<endl;
     //not transmitting and nothing in buffer
     if(length == 0)
     {
-        //we start transmitting the packet
         transmitting = true;
         length+=1; //since we are transmitting
         return Event(currentTime + service_time(mu),EventType::Departure);
     }
     else //server must be transmitting
     {
+        
         //if maxbuffsize < 0 buffer is infinite in size
         //otherwise buffer is finite and we make sure its not full
         //buf.size() = length-1 since length = buff.size() + 1 if transmitting
@@ -110,10 +151,10 @@ Event Server::arrivalEvent(const double& currentTime,const double& oldTime)
         //packet will be dropped
         else
         {
+            //cout<<"problem"<<endl;
             dropped_packets+=1;
         }
         //calculate the utilization time and mean buffer length
-        mean_buffer_length+=(length * (currentTime-oldTime));
         utilization_time+=(currentTime-oldTime);
     }
     
@@ -132,11 +173,11 @@ Event Server::departureEvent(const double& currentTime, const double& oldTime)
     //packet is done transmitting
     
     transmitting    = false;
-    //update utilization time and mean buffer length
-    mean_buffer_length+=(length * (currentTime-oldTime));
-    utilization_time+=(currentTime-oldTime); 
+    //update utilization time and mean buffer length 
+    
+    mean_buffer_length+=((double)length * (currentTime-oldTime));
+    utilization_time+=(currentTime-oldTime);
     length         -= 1; //transmitter is done with current packet
-
     //we transmit the next packet in the buffer if there is one
     if(length == 0)
     {
@@ -149,7 +190,7 @@ Event Server::departureEvent(const double& currentTime, const double& oldTime)
         transmitting = true;
 
         /*
-         dont have to worry about changing length. see below
+         don't have to worry about changing length. see below
         length+=1; //transmitter has new packet
         length-=1; //buffer moves packet from itself to transmitter
         
@@ -158,7 +199,7 @@ Event Server::departureEvent(const double& currentTime, const double& oldTime)
         return Event(currentTime + nextPacket.serviceTime,EventType::Departure);
     }
     
-    //returns an event that lets the coller know that 
+    //returns an event that lets the caller know that 
     //nothing needs to be done. 
     return Event(0,EventType::Nothing);
 }

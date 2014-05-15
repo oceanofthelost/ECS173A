@@ -18,7 +18,6 @@ class Server
         
         //server parameters
         int maxBufferSize;
-        double lambda;
         double mu;
         //length includes the packet that is being transmitted
         //if there is a transmission otherwise length is just the 
